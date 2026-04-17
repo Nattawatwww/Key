@@ -3,198 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STORAGE</title>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;500;700&family=Kanit:wght@200;400;500&display=swap" rel="stylesheet">
+    <title>Jood Key Manager</title>
     <style>
-        :root {
-            --bg: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-main: #1a1a1a;
-            --text-sub: #636e72;
-            --accent: #691111;
-            --shadow: 0 20px 40px rgba(0,0,0,0.06);
-        }
-
-        body {
-            font-family: 'Be Vietnam Pro', 'Kanit', sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .header-section { text-align: center; margin-bottom: 30px; margin-top: 40px; }
-        h1 { font-weight: 700; margin: 0; letter-spacing: -1px; font-size: 2rem; }
-        
-        .main-card {
-            background: var(--card-bg);
-            width: 100%;
-            max-width: 800px;
-            border-radius: 30px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.8);
-        }
-
-        .card-header {
-            padding: 25px 30px;
-            background: #fafafa;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-title { font-weight: 700; color: var(--text-main); font-size: 1.1rem; }
-        
-        .count-badges { display: flex; gap: 8px; }
-        .badge {
-            font-size: 0.7rem;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: 500;
-            color: white;
-        }
-        .badge-item { background: var(--text-main); }
-        .badge-set { background: var(--accent); }
-
-        .search-box {
-            padding: 15px 30px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        #searchBar {
-            width: 100%;
-            border: none;
-            padding: 10px 0;
-            font-size: 1rem;
-            outline: none;
-            font-family: inherit;
-        }
-
-        .item-list { 
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0;
-        }
-
-        .item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 30px;
-            transition: 0.2s;
-            border-bottom: 1px solid #f9f9f9;
-        }
-
-        @media (min-width: 600px) {
-            .item-row:nth-child(odd) { border-right: 1px solid #f0f0f0; }
-        }
-
-        @media (max-width: 600px) {
-            .item-list { grid-template-columns: 1fr; }
-            .item-row { padding: 15px 20px; }
-        }
-
-        .item-row:hover { background-color: #fcfcfc; }
-        .item-name { color: var(--text-sub); font-weight: 400; font-size: 0.95rem; }
-        .item-value { 
-            font-weight: 600; 
-            color: var(--text-main); 
-            background: #f1f2f6; 
-            padding: 4px 12px; 
-            border-radius: 12px;
-            font-size: 0.9rem;
-        }
-
-        .empty-state { grid-column: 1 / -1; padding: 40px; text-align: center; color: #b2bec3; font-size: 0.9rem; }
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
+        h2 { margin-top: 0; color: #1e293b; text-align: center; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b; }
+        input, select { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; box-sizing: border-box; }
+        button { width: 100%; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .result { margin-top: 1.5rem; padding: 1rem; background: #f1f5f9; border-radius: 0.5rem; display: none; word-break: break-all; }
+        .key-text { color: var(--primary); font-weight: bold; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <div class="header-section">
-        <h1>Inventory Jood Piece</h1>
-        <div class="subtitle">By Nattawat</div>
+<div class="card">
+    <h2>Jood Key Generator</h2>
+    <label>Admin Password</label>
+    <input type="password" id="adminPass" placeholder="รหัสเจ้าของ">
+    
+    <label>อายุการใช้งาน</label>
+    <select id="duration">
+        <option value="7">7 วัน (Weekly)</option>
+        <option value="30">1 เดือน (Monthly)</option>
+    </select>
+
+    <button onclick="generateKey()">สร้าง Key ใหม่</button>
+
+    <div id="resultBox" class="result">
+        <label>สร้างสำเร็จ! ก๊อปปี้ด้านล่างนี้:</label>
+        <div id="keyDisplay" class="key-text"></div>
+        <small id="expiryDisplay" style="color: #94a3b8;"></small>
     </div>
+</div>
 
-    <div class="main-card">
-        <div class="card-header">
-            <div class="card-title">Storage Items</div>
-            <div class="count-badges">
-                <span class="badge badge-set" id="setCount">0 Sets</span>
-                <span class="badge badge-item" id="itemCount">0 Items</span>
-            </div>
-        </div>
+<script>
+    // ตั้งรหัสผ่านเจ้าของตรงนี้
+    const OWNER_SECRET = "JOOD2026"; 
 
-        <div class="search-box">
-            <input type="text" id="searchBar" placeholder="Search item..." onkeyup="render()">
-        </div>
-
-        <div class="item-list" id="display"></div>
-    </div>
-
-    <script>
-        const gameItems = {
-            "Race Reroll": "4700+",
-            "Trait Reroll": "1800+",
-            "Holy Fragment": "4852",
-            "Adam Set": "100+",
-            "Gojo Set": "18",
-            "Sukuna Set": "8",
-            "Doraemon Set": "2",
-            "Cid Set": "41",
-            "Flashy Set": "4",
-            "Gohan Set": "22",
-            "Haki Set": "10+",
-            "Cell Head": "22",
-            "Sukuna Core": "5",
-            "Red Scarf": "290",
-            "Sukuna Finger": "90",
-            "Six Eye": "42",
-            "Gokumonkyo": "27",
-            "Sun Glasses": "22",
-            "Cid Sword": "40",
-            "Cid Clock": "33",
-            "Instakill Sword": "4",
-            "Stone Mask": "14",
-        };
-
-        function render() {
-            const container = document.getElementById('display');
-            const setCountLabel = document.getElementById('setCount');
-            const itemCountLabel = document.getElementById('itemCount');
-            const searchTxt = document.getElementById('searchBar').value.toLowerCase();
-            
-            let html = "";
-            let setCount = 0;
-            let itemCount = 0;
-
-            for (let key in gameItems) {
-                if (key.toLowerCase().includes(searchTxt)) {
-                    html += `
-                        <div class="item-row">
-                            <span class="item-name">${key}</span>
-                            <span class="item-value">${gameItems[key]}</span>
-                        </div>
-                    `;
-                    
-                    if (key.includes("Set")) {
-                        setCount++;
-                    } else {
-                        itemCount++;
-                    }
-                }
-            }
-
-            container.innerHTML = html || '<div class="empty-state">No items found</div>';
-            itemCountLabel.innerText = `${itemCount} Items`;
-            setCountLabel.innerText = `${setCount} Sets`;
+    function generateKey() {
+        const pass = document.getElementById('adminPass').value;
+        if (pass !== OWNER_SECRET) {
+            alert("รหัสผ่านไม่ถูกต้อง!");
+            return;
         }
-        render();
-    </script>
+
+        const days = parseInt(document.getElementById('duration').value);
+        const randomStr = Math.random().toString(36).substring(2, 12).toUpperCase();
+        const key = "JOOD-" + randomStr;
+        
+        // คำนวณเวลาหมดอายุ (Timestamp)
+        const now = new Date();
+        const expiryDate = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
+        
+        // แสดงผล
+        document.getElementById('resultBox').style.display = 'block';
+        document.getElementById('keyDisplay').innerText = key;
+        document.getElementById('expiryDisplay').innerText = "หมดอายุวันที่: " + expiryDate.toLocaleString();
+
+        // หมายเหตุ: ในขั้นตอนนี้คุณต้องส่งค่า 'key' และ 'expiryDate.getTime()' ไปเก็บใน Database ของคุณ
+        console.log("บันทึกข้อมูล:", { key: key, expires: expiryDate.getTime() });
+        alert("สร้าง Key แล้ว! (อย่าลืมนำไปเพิ่มในระบบ Database ของคุณ)");
+    }
+</script>
+
 </body>
 </html>
