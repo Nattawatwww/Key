@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Key Management</title>
+    <title>JOOD | Key Management System</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
         
@@ -36,7 +36,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        .container { width: 100%; max-width: 440px; }
+        .container { width: 100%; max-width: 480px; }
 
         .card {
             background: var(--card-bg);
@@ -66,6 +66,7 @@
             display: block; 
         }
 
+        /* Custom Dropdown */
         .custom-select { position: relative; width: 100%; margin-bottom: 20px; }
         .select-selected {
             background: var(--input-bg);
@@ -105,24 +106,24 @@
         .btn-primary { background: var(--accent); color: white; }
         .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.1); }
 
+        /* Key Items */
         .key-item {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border);
             border-radius: 20px; padding: 18px; margin-bottom: 12px;
         }
-        .key-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-        .key-id { font-weight: 600; font-size: 14px; color: #fff; letter-spacing: 0.02em; }
+        .key-info { display: flex; justify-content: space-between; align-items: start; margin-bottom: 14px; }
+        .key-id { font-weight: 600; font-size: 14px; color: #fff; letter-spacing: 0.02em; display: block; margin-bottom: 4px; }
         
-        .badge-group { display: flex; gap: 6px; align-items: center; }
+        .hwid-status { font-size: 11px; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px; }
+        .user-tag { color: var(--accent); font-weight: 500; font-size: 10px; background: rgba(99, 102, 241, 0.1); padding: 2px 6px; border-radius: 4px; width: fit-content; margin-top: 4px; }
+
         .key-timer { 
             font-size: 11px; font-weight: 500; 
             color: var(--accent); background: rgba(99, 102, 241, 0.1); 
-            padding: 4px 10px; border-radius: 8px;
+            padding: 4px 10px; border-radius: 8px; white-space: nowrap;
         }
-        /* เพิ่มสไตล์ตัวบอกสถานะล็อก HWID */
-        .hwid-status { font-size: 10px; color: var(--text-dim); }
 
-        /* ปรับ grid actions เพื่อรองรับปุ่ม Reset */
         .actions { display: grid; grid-template-columns: 45px 1fr 1fr 38px 38px; gap: 6px; }
         
         .input-qty {
@@ -168,19 +169,22 @@
             </div>
             <button class="btn-primary" onclick="generateAndSave()">Generate New Key</button>
         </div>
+        
         <div id="list-container"></div>
     </div>
 </div>
 
 <script>
-    const DB_URL = "https://jood-af2d8-default-rtdb.asia-southeast1.firebasedatabase.app/keys";
+    const BASE_URL = "https://jood-af2d8-default-rtdb.asia-southeast1.firebasedatabase.app";
     const DB_SECRET = "JXRzMTiI2hQo9rps823i8guY5y14fxWPUeFDO5oU";
     const ADMIN_PASS = "1122"; 
 
     let currentDuration = 1;
     let allKeys = {};
+    let userLinks = {};
 
     function toggleDropdown() { document.getElementById("dropdown-items").classList.toggle("select-show"); }
+    
     function setDuration(val, text) {
         currentDuration = val;
         document.getElementById("selected-val").innerText = text;
@@ -209,36 +213,56 @@
     }
 
     function getCountdown(expiry) {
-        // หากค่า expiry สูงกว่าปี 2050 (Timestamp > 2500000000) ให้แสดงเป็น Infinite
-        if (expiry > 2500000000) return "∞ INFINITY";
-        
+        if (expiry > 2500000000) return "∞ INFINITE";
         const diff = expiry - Math.floor(Date.now() / 1000);
         if (diff <= 0) return "EXPIRED";
-        const d = Math.floor(diff / 86400), h = Math.floor((diff % 86400) / 3600), m = Math.floor((diff % 3600) / 60), s = diff % 60;
+        const d = Math.floor(diff / 86400), 
+              h = Math.floor((diff % 86400) / 3600), 
+              m = Math.floor((diff % 3600) / 60), 
+              s = diff % 60;
         return (d > 0 ? d + "d " : "") + `${h}h ${m}m ${s}s`;
     }
 
+    // ฟังก์ชันดึงข้อมูลจาก Database
     async function fetchKeys() {
         try {
-            const res = await fetch(`${DB_URL}.json?auth=${DB_SECRET}`);
-            allKeys = await res.json() || {};
+            const [resKeys, resLinks] = await Promise.all([
+                fetch(`${BASE_URL}/keys.json?auth=${DB_SECRET}`),
+                fetch(`${BASE_URL}/user_links.json?auth=${DB_SECRET}`)
+            ]);
+            
+            allKeys = await resKeys.json() || {};
+            userLinks = await resLinks.json() || {};
+            
             renderList();
-        } catch (e) {}
+        } catch (e) { console.error(e); }
     }
 
     function renderList() {
         const container = document.getElementById('list-container');
         container.innerHTML = "";
+        
+        // จับคู่ Key กับ Discord UID
+        const keyToUserMap = {};
+        Object.entries(userLinks).forEach(([uid, keyName]) => {
+            keyToUserMap[keyName] = uid;
+        });
+
         Object.keys(allKeys).reverse().forEach(id => {
             const item = allKeys[id];
             const hasHWID = item.hwid && item.hwid !== "";
+            const linkedUID = keyToUserMap[id];
+            
             const div = document.createElement('div');
             div.className = 'key-item';
             div.innerHTML = `
                 <div class="key-info">
                     <div>
                         <span class="key-id">${id}</span>
-                        <div class="hwid-status">${hasHWID ? '🔒 Locked' : '🔓 Available'}</div>
+                        <div class="hwid-status">
+                            <span>${hasHWID ? '🔒 Locked' : '🔓 Available'}</span>
+                            ${linkedUID ? `<span class="user-tag">👤 UID: ${linkedUID}</span>` : ''}
+                        </div>
                     </div>
                     <span class="key-timer" id="timer-${id}">${getCountdown(item.expiry)}</span>
                 </div>
@@ -253,6 +277,7 @@
         });
     }
 
+    // อัปเดตเวลาถอยหลังทุกวินาที
     setInterval(() => {
         for (let id in allKeys) {
             const el = document.getElementById(`timer-${id}`);
@@ -266,15 +291,9 @@
 
     async function generateAndSave() {
         const key = 'QA-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-        let expiry;
-        
-        if (currentDuration === 99999) {
-            expiry = 3000000000; // ตั้งค่าไว้ปี 2065 (ถาวร)
-        } else {
-            expiry = Math.floor(Date.now() / 1000) + (currentDuration * 86400);
-        }
+        let expiry = (currentDuration === 99999) ? 3000000000 : Math.floor(Date.now() / 1000) + (currentDuration * 86400);
 
-        await fetch(`${DB_URL}/${key}.json?auth=${DB_SECRET}`, { 
+        await fetch(`${BASE_URL}/keys/${key}.json?auth=${DB_SECRET}`, { 
             method: 'PUT', 
             body: JSON.stringify({ expiry: expiry, hwid: "" }) 
         });
@@ -282,29 +301,39 @@
     }
 
     async function updateTime(key, currentExpiry, mode) {
-        const days = parseInt(document.getElementById(`val-${key}`).value) || 0;
+        const valInput = document.getElementById(`val-${key}`);
+        const days = parseInt(valInput.value) || 0;
         let newExpiry = mode === 'add' ? currentExpiry + (days * 86400) : currentExpiry - (days * 86400);
         
-        await fetch(`${DB_URL}/${key}/expiry.json?auth=${DB_SECRET}`, { method: 'PUT', body: JSON.stringify(newExpiry) });
+        await fetch(`${BASE_URL}/keys/${key}/expiry.json?auth=${DB_SECRET}`, { method: 'PUT', body: JSON.stringify(newExpiry) });
         showToast("Time Updated"); fetchKeys();
     }
 
     async function resetHWID(key) {
-        if (!confirm("ต้องการรีเซ็ต HWID สำหรับ " + key + " ใช่หรือไม่?")) return;
-        await fetch(`${DB_URL}/${key}/hwid.json?auth=${DB_SECRET}`, { 
-            method: 'PUT', 
-            body: JSON.stringify("") 
-        });
+        if (!confirm("Confirm Reset HWID for " + key + "?")) return;
+        await fetch(`${BASE_URL}/keys/${key}/hwid.json?auth=${DB_SECRET}`, { method: 'PUT', body: JSON.stringify("") });
         showToast("HWID Reset Success"); fetchKeys();
     }
 
     async function deleteKey(key) {
-        if (!confirm("Delete " + key + "?")) return;
-        await fetch(`${DB_URL}/${key}.json?auth=${DB_SECRET}`, { method: 'DELETE' });
-        showToast("Deleted"); fetchKeys();
+        if (!confirm("Permanently delete " + key + "?")) return;
+        
+        // หาว่ามีใครเชื่อม key นี้ไว้ไหม เพื่อลบออกให้สะอาด
+        const linkedUserUID = Object.keys(userLinks).find(uid => userLinks[uid] === key);
+        
+        const tasks = [fetch(`${BASE_URL}/keys/${key}.json?auth=${DB_SECRET}`, { method: 'DELETE' })];
+        if (linkedUserUID) {
+            tasks.push(fetch(`${BASE_URL}/user_links/${linkedUserUID}.json?auth=${DB_SECRET}`, { method: 'DELETE' }));
+        }
+
+        await Promise.all(tasks);
+        showToast("Key & Links Deleted"); fetchKeys();
     }
 
-    function startDataSync() { fetchKeys(); setInterval(fetchKeys, 20000); }
+    function startDataSync() { 
+        fetchKeys(); 
+        setInterval(fetchKeys, 15000); // ซิงค์ข้อมูลทุก 15 วินาที
+    }
 </script>
 </body>
 </html>
